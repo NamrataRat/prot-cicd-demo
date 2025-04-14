@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nams-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nams-app
+  template:
+    metadata:
+      labels:
+        app: nams-app
+    spec:
+      containers:
+        - name: nams-app
+          image: <your-docker-registry>/nams-app:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: NODE_ENV
