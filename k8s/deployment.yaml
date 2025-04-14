@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: nams-app
-          image: <your-docker-registry>/nams-app:latest
+          image: gcr.io/terraform-449405/nams-app:latest  # Jenkins will replace this line with the correct tag
           ports:
             - containerPort: 3000
           env:
