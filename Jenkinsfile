@@ -8,9 +8,11 @@ pipeline {
     environment {
         PROJECT_ID = "terraform-449405"
         GKE_ZONE = "asia-south1-a"
-        DOCKER_IMAGE = "gcr.io/${PROJECT_ID}/nams-app:${env.BUILD_NUMBER}"
+        DOCKER_IMAGE = "${REGION}-docker.pkg.dev/${PROJECT_ID}/nams-app/${IMAGE_NAME}:${env.BUILD_NUMBER}"
         CLUSTER_NAME = "ci-demo-cluster"
         GIT_CREDENTIALS_ID = "github-token"
+        IMAGE_NAME = "nams-app"
+        REGION = "asia-south1"  
     }
 
     stages {
@@ -32,41 +34,24 @@ pipeline {
             }
         }
 
-        // stage('Authenticate with GCP & Push Docker Image') {
-        //     steps {
-        //         withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
-        //             sh '''
-        //                 gcloud auth activate-service-account --key-file=$GCP_KEY
-        //                 gcloud config set project ${PROJECT_ID}
-        //                 gcloud auth configure-docker --quiet
-        //                 docker push ${DOCKER_IMAGE}
-        //             '''
-        //         }
-        //     }
-        // }
-
         stage('Authenticate and Push Image') {
             steps {
                 withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
-                    sh '''
+                    sh """
                         echo "Authenticating with GCP..."
-                        gcloud auth activate-service-account --key-file=$GCP_KEY
-                        gcloud config set project $PROJECT_ID
-                        gcloud auth configure-docker --quiet
-                        docker push $DOCKER_IMAGE
-                    '''
+                        gcloud auth activate-service-account --key-file=\$GCP_KEY
+                        gcloud config set project ${PROJECT_ID}
+                        gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+                        docker push ${DOCKER_IMAGE}
+                    """
                 }
             }
-}
-
-
+        }
 
         stage('Update Deployment YAML') {
             steps {
                 script {
-                    sh '''
-                    sed -i "s|image: .*|image: ${DOCKER_IMAGE}|" k8s/deployment.yaml
-                    '''
+                    sh "sed -i 's|image: .*|image: ${DOCKER_IMAGE}|' k8s/deployment.yaml"
                 }
             }
         }
@@ -74,11 +59,11 @@ pipeline {
         stage('Commit and Push Updated YAML') {
             steps {
                 sh '''
-                git config user.name "ci-bot"
-                git config user.email "ci@example.com"
-                git add k8s/deployment.yaml
-                git commit -m "Update deployment image to ${DOCKER_IMAGE}"
-                git push origin main
+                    git config user.name "ci-bot"
+                    git config user.email "ci@example.com"
+                    git add k8s/deployment.yaml
+                    git commit -m "Update deployment image to ${DOCKER_IMAGE}" || echo "No changes to commit"
+                    git push origin main
                 '''
             }
         }
