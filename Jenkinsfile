@@ -32,12 +32,16 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Authenticate with GCP & Push Docker Image') {
             steps {
-                sh '''
-                    gcloud auth configure-docker --quiet
-                    docker push ${DOCKER_IMAGE}
-                '''
+                withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
+                    sh '''
+                        gcloud auth activate-service-account --key-file=$GCP_KEY
+                        gcloud config set project ${PROJECT_ID}
+                        gcloud auth configure-docker --quiet
+                        docker push ${DOCKER_IMAGE}
+                    '''
+                }
             }
         }
 
