@@ -11,8 +11,6 @@ pipeline {
         DOCKER_IMAGE = "asia-south1-docker.pkg.dev/${PROJECT_ID}/nams-app/nams-app:${env.BUILD_NUMBER}"
         CLUSTER_NAME = "ci-demo-cluster"
         GIT_CREDENTIALS_ID = "github-token"
-        IMAGE_NAME = "nams-app"
-        REGION = "asia-south1"  
     }
 
     stages {
@@ -41,7 +39,9 @@ pipeline {
                         echo "Authenticating with GCP..."
                         gcloud auth activate-service-account --key-file=$GCP_KEY
                         gcloud config set project $PROJECT_ID
+                        echo "Configuring Docker to use Artifact Registry..."
                         gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
+                        echo "Pushing Docker image..."
                         docker push $DOCKER_IMAGE
                     '''
                 }
@@ -51,7 +51,9 @@ pipeline {
         stage('Update Deployment YAML') {
             steps {
                 script {
-                    sh "sed -i 's|image: .*|image: ${DOCKER_IMAGE}|' k8s/deployment.yaml"
+                    sh '''
+                    sed -i "s|image: .*|image: ${DOCKER_IMAGE}|" k8s/deployment.yaml
+                    '''
                 }
             }
         }
@@ -59,11 +61,11 @@ pipeline {
         stage('Commit and Push Updated YAML') {
             steps {
                 sh '''
-                    git config user.name "ci-bot"
-                    git config user.email "ci@example.com"
-                    git add k8s/deployment.yaml
-                    git commit -m "Update deployment image to ${DOCKER_IMAGE}" || echo "No changes to commit"
-                    git push origin main
+                git config user.name "ci-bot"
+                git config user.email "ci@example.com"
+                git add k8s/deployment.yaml
+                git commit -m "Update deployment image to ${DOCKER_IMAGE}"
+                git push origin main
                 '''
             }
         }
