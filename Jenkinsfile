@@ -8,7 +8,7 @@ pipeline {
     environment {
         PROJECT_ID = "terraform-449405"
         GKE_ZONE = "asia-south1-a"
-        DOCKER_IMAGE = "${REGION}-docker.pkg.dev/${PROJECT_ID}/nams-app/${IMAGE_NAME}:${env.BUILD_NUMBER}"
+        DOCKER_IMAGE = "asia-south1-docker.pkg.dev/${PROJECT_ID}/nams-app/nams-app:${env.BUILD_NUMBER}"
         CLUSTER_NAME = "ci-demo-cluster"
         GIT_CREDENTIALS_ID = "github-token"
         IMAGE_NAME = "nams-app"
@@ -37,13 +37,13 @@ pipeline {
         stage('Authenticate and Push Image') {
             steps {
                 withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
-                    sh """
+                    sh '''
                         echo "Authenticating with GCP..."
-                        gcloud auth activate-service-account --key-file=\$GCP_KEY
-                        gcloud config set project ${PROJECT_ID}
-                        gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
-                        docker push ${DOCKER_IMAGE}
-                    """
+                        gcloud auth activate-service-account --key-file=$GCP_KEY
+                        gcloud config set project $PROJECT_ID
+                        gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
+                        docker push $DOCKER_IMAGE
+                    '''
                 }
             }
         }
