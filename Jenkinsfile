@@ -20,6 +20,12 @@ pipeline {
             }
         }
 
+        stage('Check Docker Access') {
+            steps {
+                sh 'whoami && which docker && docker --version'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 sh "docker build -t ${DOCKER_IMAGE} ."
