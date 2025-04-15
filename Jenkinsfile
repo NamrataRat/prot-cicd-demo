@@ -49,19 +49,20 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
                     sh """
-                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-                            -v \$(pwd):/workspace -w /workspace \
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            -v \$(pwd):/workspace \
                             -v \$GCP_KEY:/tmp/key.json \
                             google/cloud-sdk:slim \
                             bash -c '
-                                gcloud auth activate-service-account --key-file=$GCP_KEY &&
-                                gcloud auth configure-docker --quiet &&
+                                gcloud auth activate-service-account --key-file=/tmp/key.json && 
+                                gcloud auth configure-docker --quiet && 
                                 docker push ${DOCKER_IMAGE}
                             '
                     """
                 }
             }
-}
+        }
 
         stage('Update Deployment YAML') {
             steps {
