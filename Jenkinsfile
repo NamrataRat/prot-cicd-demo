@@ -32,18 +32,36 @@ pipeline {
             }
         }
 
-        stage('Authenticate with GCP & Push Docker Image') {
+        // stage('Authenticate with GCP & Push Docker Image') {
+        //     steps {
+        //         withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
+        //             sh '''
+        //                 gcloud auth activate-service-account --key-file=$GCP_KEY
+        //                 gcloud config set project ${PROJECT_ID}
+        //                 gcloud auth configure-docker --quiet
+        //                 docker push ${DOCKER_IMAGE}
+        //             '''
+        //         }
+        //     }
+        // }
+
+        stage('Authenticate and Push Image') {
             steps {
-                withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
-                    sh '''
-                        gcloud auth activate-service-account --key-file=$GCP_KEY
-                        gcloud config set project ${PROJECT_ID}
-                        gcloud auth configure-docker --quiet
-                        docker push ${DOCKER_IMAGE}
-                    '''
+                withCredentials([file(credentialsId: 'GCP_KEY', variable: 'GCP_KEY')]) {
+                    sh """
+                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                            -v \$(pwd):/workspace -w /workspace \
+                            -v \$GCP_KEY:/tmp/key.json \
+                            google/cloud-sdk:slim \
+                            bash -c '
+                                gcloud auth activate-service-account --key-file=/tmp/key.json &&
+                                gcloud auth configure-docker --quiet &&
+                                docker push ${DOCKER_IMAGE}
+                            '
+                    """
                 }
             }
-        }
+}
 
         stage('Update Deployment YAML') {
             steps {
