@@ -52,17 +52,18 @@ pipeline {
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
                             -v \$(pwd):/workspace \
-                            -v \$GCP_KEY:/tmp/key.json \
+                            -v \$GCP_KEY:\$GCP_KEY \
+                            -w /workspace \
                             google/cloud-sdk:slim \
                             bash -c '
-                                gcloud auth activate-service-account --key-file=/tmp/key.json && 
+                                gcloud auth activate-service-account --key-file=\$GCP_KEY && 
                                 gcloud auth configure-docker --quiet && 
                                 docker push ${DOCKER_IMAGE}
                             '
                     """
                 }
             }
-        }
+}
 
         stage('Update Deployment YAML') {
             steps {
