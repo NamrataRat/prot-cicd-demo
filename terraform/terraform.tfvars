@@ -1,0 +1,8 @@
+project_id       = "terraform-449405"
+region           = "us-central1"
+zone             = "us-central1-a"
+vm_name          = "nams-cloudshell-vm"
+machine_type     = "e2-micro"
+image            = "debian-cloud/debian-11"
+ssh_user         = "cloudshell-user"
+public_key_path  = "/home/cloudshell-user/.ssh/google_compute_engine.pub"
